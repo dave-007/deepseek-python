@@ -22,6 +22,10 @@ since the local app needs credentials for Azure AI to work properly.
   * [Costs](#costs)
   * [Security Guidelines](#security-guidelines)
 
+## Important Security Notice
+
+This template, the application code and configuration it contains, has been built to showcase Microsoft Azure specific services and tools. We strongly advise our customers not to make this code part of their production environments without implementing or enabling additional security features. When you deploy this app, it will be **publicly accessible on the internet**. See [Security Guidelines](#security-guidelines) for more information on how to secure your deployment.
+
 ## Features
 
 * A Python [Quart](https://quart.palletsprojects.com/en/latest/) that uses the [Azure AI Inference SDK](https://learn.microsoft.com/python/api/overview/azure/ai-inference-readme?view=azure-python-preview) package to generate responses to user messages.
@@ -125,10 +129,10 @@ Once you've opened the project in [Codespaces](#github-codespaces), in [Dev Cont
     It will prompt you to provide an `azd` environment name (like "chat-app"), select a subscription from your Azure account, and select a [location where DeepSeek-R1 is available](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-serverless-availability#deepseek-models-from-microsoft) (like "westus"). Then it will provision the resources in your account and deploy the latest code. If you get an error or timeout with deployment, changing the location can help, as there may be availability constraints for the Azure AI resource.
 
 3. When `azd` has finished deploying, you'll see an endpoint URI in the command output. Visit that URI, and you should see the chat app! 🎉
-4. When you've made any changes to the app code, you can just run:
+4. Remember to take down your app once you're no longer using it, either by deleting the resource group in the Portal or running this command:
 
     ```shell
-    azd deploy
+    azd down
     ```
 
 ### Continuous deployment with GitHub Actions
@@ -198,3 +202,4 @@ Additionally, we have added a [GitHub Action](https://github.com/microsoft/secur
 You may want to consider additional security measures, such as:
 
 * Protecting the Azure Container Apps instance with a [firewall](https://learn.microsoft.com/azure/container-apps/waf-app-gateway) and/or [Virtual Network](https://learn.microsoft.com/azure/container-apps/networking?tabs=workload-profiles-env%2Cazure-cli).
+* Adding user login to the app, to restrict access only to users within your organization. See [this example for adding user login with the built-in auth feature of Container Apps](https://github.com/Azure-Samples/openai-chat-app-entra-auth-builtin).
