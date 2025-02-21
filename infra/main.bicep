@@ -14,8 +14,6 @@ param principalId string = ''
 
 param acaExists bool = false
 
-// Parameters for the Azure AI resource:
-param aiServicesResourceGroupName string = ''
 @minLength(1)
 @description('Location for the Azure AI resource')
 // https://learn.microsoft.com/azure/ai-studio/how-to/deploy-models-serverless-availability#deepseek-models-from-microsoft
@@ -48,10 +46,6 @@ resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: '${name}-rg'
   location: location
   tags: tags
-}
-
-resource aiServicesResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = if (!empty(aiServicesResourceGroupName)) {
-  name: !empty(aiServicesResourceGroupName) ? aiServicesResourceGroupName : resourceGroup.name
 }
 
 var prefix = '${name}-${resourceToken}'
@@ -133,7 +127,7 @@ module aca 'aca.bicep' = {
   }
 }
 
-/*var issuer = '${environment().authentication.loginEndpoint}${tenant().tenantId}/v2.0'
+var issuer = '${environment().authentication.loginEndpoint}${tenant().tenantId}/v2.0'
 module registration 'appregistration.bicep' = {
   name: 'reg'
   scope: resourceGroup
@@ -145,9 +139,9 @@ module registration 'appregistration.bicep' = {
     issuer: issuer
     serviceManagementReference: serviceManagementReference
   }
-}*/
+}
 
-/*module appupdate 'appupdate.bicep' = {
+module appupdate 'appupdate.bicep' = {
   name: 'appupdate'
   scope: resourceGroup
   params: {
@@ -156,11 +150,11 @@ module registration 'appregistration.bicep' = {
     openIdIssuer: issuer
     includeTokenStore: false
   }
-}*/
+}
 
 
 module aiServicesRoleBackend 'core/security/role.bicep' = {
-  scope: aiServicesResourceGroup
+  scope: resourceGroup
   name: 'aiservices-role-backend'
   params: {
     principalId: aca.outputs.identityPrincipalId

@@ -24,12 +24,12 @@ since the local app needs credentials for Azure AI to work properly.
 
 ## Important Security Notice
 
-This template, the application code and configuration it contains, has been built to showcase Microsoft Azure specific services and tools. We strongly advise our customers not to make this code part of their production environments without implementing or enabling additional security features. When you deploy this app, it will be **publicly accessible on the internet**. See [Security Guidelines](#security-guidelines) for more information on how to secure your deployment.
+This template, the application code and configuration it contains, has been built to showcase Microsoft Azure specific services and tools. We strongly advise our customers not to make this code part of their production environments without implementing or enabling additional security features. See [Security Guidelines](#security-guidelines) for more information on how to secure your deployment.
 
 ## Features
 
 * A Python [Quart](https://quart.palletsprojects.com/en/latest/) that uses the [Azure AI Inference SDK](https://learn.microsoft.com/python/api/overview/azure/ai-inference-readme?view=azure-python-preview) package to generate responses to user messages.
-* A basic HTML/JS frontend that streams responses from the backend using [JSON Lines](http://jsonlines.org/) over a [ReadableStream](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream).
+* A basic HTML/JS frontend that streams responses from the backend using [JSON Lines](http://jsonlines.org/) over a [ReadableStream](https://developer.mozilla.org/docs/Web/API/ReadableStream).
 * [Bicep files](https://docs.microsoft.com/azure/azure-resource-manager/bicep/) for provisioning Azure resources, including Azure AI Services, Azure Container Apps, Azure Container Registry, Azure Log Analytics, and RBAC roles.
 
 ![Screenshot of the chat app](docs/screenshot_chatapp.png)
@@ -126,7 +126,7 @@ Once you've opened the project in [Codespaces](#github-codespaces), in [Dev Cont
     azd up
     ```
 
-    It will prompt you to provide an `azd` environment name (like "chat-app"), select a subscription from your Azure account, and select a [location where DeepSeek-R1 is available](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-serverless-availability#deepseek-models-from-microsoft) (like "westus"). Then it will provision the resources in your account and deploy the latest code. If you get an error or timeout with deployment, changing the location can help, as there may be availability constraints for the Azure AI resource.
+    It will prompt you to provide an `azd` environment name (like "chat-app"), select a subscription from your Azure account, and select a [location where DeepSeek-R1 is available](https://learn.microsoft.com/azure/ai-studio/how-to/deploy-models-serverless-availability#deepseek-models-from-microsoft) (like "westus"). Then it will provision the resources in your account and deploy the latest code. If you get an error or timeout with deployment, changing the location can help, as there may be availability constraints for the Azure AI resource.
 
 3. When `azd` has finished deploying, you'll see an endpoint URI in the command output. Visit that URI, and you should see the chat app! 🎉
 4. Remember to take down your app once you're no longer using it, either by deleting the resource group in the Portal or running this command:
@@ -197,9 +197,11 @@ either by deleting the resource group in the Portal or running `azd down`.
 
 This template uses [Managed Identity](https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/overview) for authenticating to the Azure OpenAI service.
 
+This template also enables the Container Apps [built-in authentication feature](https://learn.microsoft.com/azure/container-apps/authentication) with a Microsoft Entra ID identity provider. The Bicep files use the new [Microsoft Graph extension (public preview)](https://learn.microsoft.com/graph/templates/overview-bicep-templates-for-graph) to create the Entra application registration using [managed identity with Federated Identity Credentials](https://learn.microsoft.com/azure/container-apps/managed-identity), so that no client secrets or certificates are necessary.
+
 Additionally, we have added a [GitHub Action](https://github.com/microsoft/security-devops-action) that scans the infrastructure-as-code files and generates a report containing any detected issues. To ensure continued best practices in your own repository, we recommend that anyone creating solutions based on our templates ensure that the [Github secret scanning](https://docs.github.com/code-security/secret-scanning/about-secret-scanning) setting is enabled.
 
 You may want to consider additional security measures, such as:
 
 * Protecting the Azure Container Apps instance with a [firewall](https://learn.microsoft.com/azure/container-apps/waf-app-gateway) and/or [Virtual Network](https://learn.microsoft.com/azure/container-apps/networking?tabs=workload-profiles-env%2Cazure-cli).
-* Adding user login to the app, to restrict access only to users within your organization. See [this example for adding user login with the built-in auth feature of Container Apps](https://github.com/Azure-Samples/openai-chat-app-entra-auth-builtin).
+* Enabling Microsoft Defender for Cloud on the resource group and setting up [security policies](https://learn.microsoft.com/azure/defender-for-cloud/security-policy-concept).

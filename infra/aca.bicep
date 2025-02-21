@@ -47,6 +47,9 @@ module app 'core/host/container-app-upsert.bicep' = {
     containerRegistryName: containerRegistryName
     env: env
     targetPort: 50505
+    secrets: {
+      'override-use-mi-fic-assertion-client-id': acaIdentity.properties.clientId
+    }
   }
 }
 
