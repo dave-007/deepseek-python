@@ -50,7 +50,7 @@ module app 'core/host/container-app-upsert.bicep' = {
   }
 }
 
-output SERVICE_ACA_IDENTITY_PRINCIPAL_ID string = acaIdentity.properties.principalId
-output SERVICE_ACA_NAME string = app.outputs.name
-output SERVICE_ACA_URI string = app.outputs.uri
-output SERVICE_ACA_IMAGE_NAME string = app.outputs.imageName
+output identityPrincipalId string = acaIdentity.properties.principalId
+output name string = app.outputs.name
+output uri string = app.outputs.uri
+output imageName string = app.outputs.imageName

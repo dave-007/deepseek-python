@@ -14,8 +14,6 @@ param principalId string = ''
 
 param acaExists bool = false
 
-// Parameters for the Azure AI resource:
-param aiServicesResourceGroupName string = ''
 @minLength(1)
 @description('Location for the Azure AI resource')
 // https://learn.microsoft.com/azure/ai-studio/how-to/deploy-models-serverless-availability#deepseek-models-from-microsoft
@@ -38,7 +36,6 @@ param disableKeyBasedAuth bool = true
 // Parameters for the specific Azure AI deployment:
 param aiServicesDeploymentName string = 'DeepSeek-R1'
 
-
 var resourceToken = toLower(uniqueString(subscription().id, name, location))
 var tags = { 'azd-env-name': name }
 
@@ -46,10 +43,6 @@ resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: '${name}-rg'
   location: location
   tags: tags
-}
-
-resource aiServicesResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = if (!empty(aiServicesResourceGroupName)) {
-  name: !empty(aiServicesResourceGroupName) ? aiServicesResourceGroupName : resourceGroup.name
 }
 
 var prefix = '${name}-${resourceToken}'
@@ -64,7 +57,7 @@ module aiServices 'br/public:avm/res/cognitive-services/account:0.7.2' = {
     tags: tags
     kind: 'AIServices'
     customSubDomainName: aiServicesNameAndSubdomain
-    sku:  'S0'
+    sku: 'S0'
     publicNetworkAccess: 'Enabled'
     deployments: [
       {
@@ -78,7 +71,8 @@ module aiServices 'br/public:avm/res/cognitive-services/account:0.7.2' = {
           name: 'GlobalStandard'
           capacity: 1
         }
-      }]
+      }
+    ]
     disableLocalAuth: disableKeyBasedAuth
     roleAssignments: [
       {
@@ -131,12 +125,11 @@ module aca 'aca.bicep' = {
   }
 }
 
-
 module aiServicesRoleBackend 'core/security/role.bicep' = {
-  scope: aiServicesResourceGroup
+  scope: resourceGroup
   name: 'aiservices-role-backend'
   params: {
-    principalId: aca.outputs.SERVICE_ACA_IDENTITY_PRINCIPAL_ID
+    principalId: aca.outputs.identityPrincipalId
     roleDefinitionId: 'a97b65f3-24c7-4388-baec-2e87135dc908'
     principalType: 'ServicePrincipal'
   }
@@ -148,10 +141,10 @@ output AZURE_TENANT_ID string = tenant().tenantId
 output AZURE_DEEPSEEK_DEPLOYMENT string = aiServicesDeploymentName
 output AZURE_INFERENCE_ENDPOINT string = 'https://${aiServices.outputs.name}.services.ai.azure.com/models'
 
-output SERVICE_ACA_IDENTITY_PRINCIPAL_ID string = aca.outputs.SERVICE_ACA_IDENTITY_PRINCIPAL_ID
-output SERVICE_ACA_NAME string = aca.outputs.SERVICE_ACA_NAME
-output SERVICE_ACA_URI string = aca.outputs.SERVICE_ACA_URI
-output SERVICE_ACA_IMAGE_NAME string = aca.outputs.SERVICE_ACA_IMAGE_NAME
+output SERVICE_ACA_IDENTITY_PRINCIPAL_ID string = aca.outputs.identityPrincipalId
+output SERVICE_ACA_NAME string = aca.outputs.name
+output SERVICE_ACA_URI string = aca.outputs.uri
+output SERVICE_ACA_IMAGE_NAME string = aca.outputs.imageName
 
 output AZURE_CONTAINER_ENVIRONMENT_NAME string = containerApps.outputs.environmentName
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerApps.outputs.registryLoginServer
