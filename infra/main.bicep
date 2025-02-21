@@ -60,7 +60,7 @@ module aiServices 'br/public:avm/res/cognitive-services/account:0.7.2' = {
     tags: tags
     kind: 'AIServices'
     customSubDomainName: aiServicesNameAndSubdomain
-    sku:  'S0'
+    sku: 'S0'
     publicNetworkAccess: 'Enabled'
     deployments: [
       {
@@ -74,7 +74,8 @@ module aiServices 'br/public:avm/res/cognitive-services/account:0.7.2' = {
           name: 'GlobalStandard'
           capacity: 1
         }
-      }]
+      }
+    ]
     disableLocalAuth: disableKeyBasedAuth
     roleAssignments: [
       {
@@ -151,7 +152,6 @@ module appupdate 'appupdate.bicep' = {
     includeTokenStore: false
   }
 }
-
 
 module aiServicesRoleBackend 'core/security/role.bicep' = {
   scope: resourceGroup
