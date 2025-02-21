@@ -38,6 +38,8 @@ param disableKeyBasedAuth bool = true
 // Parameters for the specific Azure AI deployment:
 param aiServicesDeploymentName string = 'DeepSeek-R1'
 
+@description('Service Management Reference for the Entra app registration')
+param serviceManagementReference string = ''
 
 var resourceToken = toLower(uniqueString(subscription().id, name, location))
 var tags = { 'azd-env-name': name }
@@ -131,12 +133,37 @@ module aca 'aca.bicep' = {
   }
 }
 
+/*var issuer = '${environment().authentication.loginEndpoint}${tenant().tenantId}/v2.0'
+module registration 'appregistration.bicep' = {
+  name: 'reg'
+  scope: resourceGroup
+  params: {
+    clientAppName: '${prefix}-entra-client-app'
+    clientAppDisplayName: 'DeepSeek Entra Client App'
+    webAppEndpoint: aca.outputs.uri
+    webAppIdentityId: aca.outputs.identityPrincipalId
+    issuer: issuer
+    serviceManagementReference: serviceManagementReference
+  }
+}*/
+
+/*module appupdate 'appupdate.bicep' = {
+  name: 'appupdate'
+  scope: resourceGroup
+  params: {
+    containerAppName: aca.outputs.name
+    clientId: registration.outputs.clientAppId
+    openIdIssuer: issuer
+    includeTokenStore: false
+  }
+}*/
+
 
 module aiServicesRoleBackend 'core/security/role.bicep' = {
   scope: aiServicesResourceGroup
   name: 'aiservices-role-backend'
   params: {
-    principalId: aca.outputs.SERVICE_ACA_IDENTITY_PRINCIPAL_ID
+    principalId: aca.outputs.identityPrincipalId
     roleDefinitionId: 'a97b65f3-24c7-4388-baec-2e87135dc908'
     principalType: 'ServicePrincipal'
   }
@@ -148,10 +175,10 @@ output AZURE_TENANT_ID string = tenant().tenantId
 output AZURE_DEEPSEEK_DEPLOYMENT string = aiServicesDeploymentName
 output AZURE_INFERENCE_ENDPOINT string = 'https://${aiServices.outputs.name}.services.ai.azure.com/models'
 
-output SERVICE_ACA_IDENTITY_PRINCIPAL_ID string = aca.outputs.SERVICE_ACA_IDENTITY_PRINCIPAL_ID
-output SERVICE_ACA_NAME string = aca.outputs.SERVICE_ACA_NAME
-output SERVICE_ACA_URI string = aca.outputs.SERVICE_ACA_URI
-output SERVICE_ACA_IMAGE_NAME string = aca.outputs.SERVICE_ACA_IMAGE_NAME
+output SERVICE_ACA_IDENTITY_PRINCIPAL_ID string = aca.outputs.identityPrincipalId
+output SERVICE_ACA_NAME string = aca.outputs.name
+output SERVICE_ACA_URI string = aca.outputs.uri
+output SERVICE_ACA_IMAGE_NAME string = aca.outputs.imageName
 
 output AZURE_CONTAINER_ENVIRONMENT_NAME string = containerApps.outputs.environmentName
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerApps.outputs.registryLoginServer

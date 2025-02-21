@@ -19,6 +19,9 @@
       },
       "disableKeyBasedAuth": {
         "value": "${DISABLE_KEY_BASED_AUTH=true}"
+      },
+      "serviceManagementReference": {
+        "value": "${AZURE_SERVICE_MANAGEMENT_REFERENCE}"
       }
     }
   }
