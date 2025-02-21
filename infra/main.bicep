@@ -18,17 +18,17 @@ param acaExists bool = false
 @description('Location for the Azure AI resource')
 // https://learn.microsoft.com/azure/ai-studio/how-to/deploy-models-serverless-availability#deepseek-models-from-microsoft
 @allowed([
-  'eastus'
-  'eastus2'
-  'northcentralus'
-  'southcentralus'
-  'westus'
-  'westus3'
+	'eastus'
+	'eastus2'
+	'northcentralus'
+	'southcentralus'
+	'westus'
+	'westus3'
 ])
 @metadata({
-  azd: {
-    type: 'location'
-  }
+	azd: {
+		type: 'location'
+	}
 })
 param aiServicesResourceLocation string
 param disableKeyBasedAuth bool = true
@@ -40,99 +40,99 @@ var resourceToken = toLower(uniqueString(subscription().id, name, location))
 var tags = { 'azd-env-name': name }
 
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: '${name}-rg'
-  location: location
-  tags: tags
+	name: '${name}-rg'
+	location: location
+	tags: tags
 }
 
 var prefix = '${name}-${resourceToken}'
 
 var aiServicesNameAndSubdomain = '${resourceToken}-aiservices'
 module aiServices 'br/public:avm/res/cognitive-services/account:0.7.2' = {
-  name: 'deepseek'
-  scope: resourceGroup
-  params: {
-    name: aiServicesNameAndSubdomain
-    location: aiServicesResourceLocation
-    tags: tags
-    kind: 'AIServices'
-    customSubDomainName: aiServicesNameAndSubdomain
-    sku: 'S0'
-    publicNetworkAccess: 'Enabled'
-    deployments: [
-      {
-        name: aiServicesDeploymentName
-        model: {
-          format: 'DeepSeek'
-          name: 'DeepSeek-R1'
-          version: '1'
-        }
-        sku: {
-          name: 'GlobalStandard'
-          capacity: 1
-        }
-      }
-    ]
-    disableLocalAuth: disableKeyBasedAuth
-    roleAssignments: [
-      {
-        principalId: principalId
-        principalType: 'User'
-        roleDefinitionIdOrName: 'Cognitive Services User'
-      }
-    ]
-  }
+	name: 'deepseek'
+	scope: resourceGroup
+	params: {
+		name: aiServicesNameAndSubdomain
+		location: aiServicesResourceLocation
+		tags: tags
+		kind: 'AIServices'
+		customSubDomainName: aiServicesNameAndSubdomain
+		sku: 'S0'
+		publicNetworkAccess: 'Enabled'
+		deployments: [
+			{
+				name: aiServicesDeploymentName
+				model: {
+					format: 'DeepSeek'
+					name: 'DeepSeek-R1'
+					version: '1'
+				}
+				sku: {
+					name: 'GlobalStandard'
+					capacity: 1
+				}
+			}
+		]
+		disableLocalAuth: disableKeyBasedAuth
+		roleAssignments: [
+			{
+				principalId: principalId
+				principalType: 'User'
+				roleDefinitionIdOrName: 'Cognitive Services User'
+			}
+		]
+	}
 }
 
 module logAnalyticsWorkspace 'core/monitor/loganalytics.bicep' = {
-  name: 'loganalytics'
-  scope: resourceGroup
-  params: {
-    name: '${prefix}-loganalytics'
-    location: location
-    tags: tags
-  }
+	name: 'loganalytics'
+	scope: resourceGroup
+	params: {
+		name: '${prefix}-loganalytics'
+		location: location
+		tags: tags
+	}
 }
 
 // Container apps host (including container registry)
 module containerApps 'core/host/container-apps.bicep' = {
-  name: 'container-apps'
-  scope: resourceGroup
-  params: {
-    name: 'app'
-    location: location
-    tags: tags
-    containerAppsEnvironmentName: '${prefix}-containerapps-env'
-    containerRegistryName: '${replace(prefix, '-', '')}registry'
-    logAnalyticsWorkspaceName: logAnalyticsWorkspace.outputs.name
-  }
+	name: 'container-apps'
+	scope: resourceGroup
+	params: {
+		name: 'app'
+		location: location
+		tags: tags
+		containerAppsEnvironmentName: '${prefix}-containerapps-env'
+		containerRegistryName: '${replace(prefix, '-', '')}registry'
+		logAnalyticsWorkspaceName: logAnalyticsWorkspace.outputs.name
+	}
 }
 
 // Container app frontend
 module aca 'aca.bicep' = {
-  name: 'aca'
-  scope: resourceGroup
-  params: {
-    name: replace('${take(prefix,19)}-ca', '--', '-')
-    location: location
-    tags: tags
-    identityName: '${prefix}-id-aca'
-    containerAppsEnvironmentName: containerApps.outputs.environmentName
-    containerRegistryName: containerApps.outputs.registryName
-    aiServicesDeploymentName: aiServicesDeploymentName
-    aiServicesEndpoint: 'https://${aiServices.outputs.name}.services.ai.azure.com/models'
-    exists: acaExists
-  }
+	name: 'aca'
+	scope: resourceGroup
+	params: {
+		name: replace('${take(prefix,19)}-ca', '--', '-')
+		location: location
+		tags: tags
+		identityName: '${prefix}-id-aca'
+		containerAppsEnvironmentName: containerApps.outputs.environmentName
+		containerRegistryName: containerApps.outputs.registryName
+		aiServicesDeploymentName: aiServicesDeploymentName
+		aiServicesEndpoint: 'https://${aiServices.outputs.name}.services.ai.azure.com/models'
+		exists: acaExists
+	}
 }
 
 module aiServicesRoleBackend 'core/security/role.bicep' = {
-  scope: resourceGroup
-  name: 'aiservices-role-backend'
-  params: {
-    principalId: aca.outputs.identityPrincipalId
-    roleDefinitionId: 'a97b65f3-24c7-4388-baec-2e87135dc908'
-    principalType: 'ServicePrincipal'
-  }
+	scope: resourceGroup
+	name: 'aiservices-role-backend'
+	params: {
+		principalId: aca.outputs.identityPrincipalId
+		roleDefinitionId: 'a97b65f3-24c7-4388-baec-2e87135dc908'
+		principalType: 'ServicePrincipal'
+	}
 }
 
 output AZURE_LOCATION string = location
