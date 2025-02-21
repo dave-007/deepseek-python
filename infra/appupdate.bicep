@@ -50,10 +50,12 @@ resource auth 'Microsoft.App/containerApps/authConfigs@2024-10-02-preview' = {
       // https://learn.microsoft.com/azure/container-apps/token-store
       tokenStore: {
         enabled: includeTokenStore
-        azureBlobStorage: includeTokenStore ? {
-          blobContainerUri: blobContainerUri
-          managedIdentityResourceId: appIdentityResourceId
-        } : {}
+        azureBlobStorage: includeTokenStore
+          ? {
+              blobContainerUri: blobContainerUri
+              managedIdentityResourceId: appIdentityResourceId
+            }
+          : {}
       }
     }
   }
