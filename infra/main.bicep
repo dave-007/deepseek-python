@@ -36,6 +36,9 @@ param disableKeyBasedAuth bool = true
 // Parameters for the specific Azure AI deployment:
 param aiServicesDeploymentName string = 'DeepSeek-R1'
 
+@description('Service Management Reference for the Entra app registration')
+param serviceManagementReference string = ''
+
 var resourceToken = toLower(uniqueString(subscription().id, name, location))
 var tags = { 'azd-env-name': name }
 
@@ -122,6 +125,31 @@ module aca 'aca.bicep' = {
     aiServicesDeploymentName: aiServicesDeploymentName
     aiServicesEndpoint: 'https://${aiServices.outputs.name}.services.ai.azure.com/models'
     exists: acaExists
+  }
+}
+
+var issuer = '${environment().authentication.loginEndpoint}${tenant().tenantId}/v2.0'
+module registration 'appregistration.bicep' = {
+  name: 'reg'
+  scope: resourceGroup
+  params: {
+    clientAppName: '${prefix}-entra-client-app'
+    clientAppDisplayName: 'DeepSeek Entra Client App'
+    webAppEndpoint: aca.outputs.uri
+    webAppIdentityId: aca.outputs.identityPrincipalId
+    issuer: issuer
+    serviceManagementReference: serviceManagementReference
+  }
+}
+
+module appupdate 'appupdate.bicep' = {
+  name: 'appupdate'
+  scope: resourceGroup
+  params: {
+    containerAppName: aca.outputs.name
+    clientId: registration.outputs.clientAppId
+    openIdIssuer: issuer
+    includeTokenStore: false
   }
 }
 
