@@ -49,11 +49,12 @@ async def test_chat_stream_text_history(client, snapshot):
 async def test_openai_managedidentity(monkeypatch):
     monkeypatch.setenv("AZURE_CLIENT_ID", "test-client-id")
     monkeypatch.setenv("AZURE_INFERENCE_ENDPOINT", "test-deepseek-service.ai.azure.com")
+    monkeypatch.setenv("RUNNING_IN_PRODUCTION", "true")
 
     monkeypatch.setattr("azure.identity.aio.ManagedIdentityCredential", mock_cred.MockAzureCredential)
 
     quart_app = quartapp.create_app(testing=True)
 
     async with quart_app.test_app():
-        assert not isinstance(quart_app.blueprints["chat"].ai_client._config.credential, AzureKeyCredential)
-        assert isinstance(quart_app.blueprints["chat"].ai_client._config.credential, AsyncTokenCredential)
+        assert not isinstance(quart_app.blueprints["chat"].azure_credential, AzureKeyCredential)
+        assert isinstance(quart_app.blueprints["chat"].azure_credential, AsyncTokenCredential)
