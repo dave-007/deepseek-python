@@ -1,8 +1,7 @@
 import json
 import os
-import time
 
-from azure.identity.aio import AzureDeveloperCliCredential, ManagedIdentityCredential
+from azure.identity.aio import AzureDeveloperCliCredential, ManagedIdentityCredential, get_bearer_token_provider
 from openai import AsyncOpenAI
 from quart import (
     Blueprint,
@@ -28,12 +27,14 @@ async def configure_openai():
         bp.azure_credential = AzureDeveloperCliCredential(tenant_id=tenant_id)
 
     # Get the token provider for Azure OpenAI based on the selected Azure credential
-    bp.openai_token = await bp.azure_credential.get_token("https://cognitiveservices.azure.com/.default")
+    bp.openai_token_provider = get_bearer_token_provider(
+        bp.azure_credential, "https://cognitiveservices.azure.com/.default"
+    )
 
     # Create the Asynchronous Azure OpenAI client
     bp.openai_client = AsyncOpenAI(
         base_url=os.environ["AZURE_INFERENCE_ENDPOINT"],
-        api_key=bp.openai_token.token,
+        api_key=await bp.openai_token_provider(),
         default_query={"api-version": "2024-05-01-preview"},
     )
 
@@ -51,14 +52,6 @@ async def index():
     return await render_template("index.html")
 
 
-@bp.before_request
-async def maybe_refresh_token():
-    if bp.openai_token.expires_on < (time.time() + 60):
-        current_app.logger.info("Token is expired, refreshing token.")
-        openai_token = await bp.azure_credential.get_token("https://cognitiveservices.azure.com/.default")
-        bp.openai_client.api_key = openai_token.token
-
-
 @bp.post("/chat/stream")
 async def chat_handler():
     request_messages = (await request.get_json())["messages"]
@@ -70,6 +63,7 @@ async def chat_handler():
             {"role": "system", "content": "You are a helpful assistant."},
         ] + request_messages
 
+        bp.openai_client.api_key = await bp.openai_token_provider()
         chat_coroutine = bp.openai_client.chat.completions.create(
             # Azure Open AI takes the deployment name as the model name
             model=bp.openai_model,
