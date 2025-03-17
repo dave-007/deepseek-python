@@ -1,13 +1,8 @@
 import json
 import os
 
-from azure.ai.inference.aio import ChatCompletionsClient
-from azure.ai.inference.models import SystemMessage
-from azure.identity.aio import (
-    AzureDeveloperCliCredential,
-    ChainedTokenCredential,
-    ManagedIdentityCredential,
-)
+from azure.identity.aio import AzureDeveloperCliCredential, ManagedIdentityCredential, get_bearer_token_provider
+from openai import AsyncOpenAI
 from quart import (
     Blueprint,
     Response,
@@ -22,38 +17,34 @@ bp = Blueprint("chat", __name__, template_folder="templates", static_folder="sta
 
 @bp.before_app_serving
 async def configure_openai():
-    # Use ManagedIdentityCredential with the client_id for user-assigned managed identities
-    user_assigned_managed_identity_credential = ManagedIdentityCredential(client_id=os.getenv("AZURE_CLIENT_ID"))
+    if os.getenv("RUNNING_IN_PRODUCTION"):
+        client_id = os.environ["AZURE_CLIENT_ID"]
+        current_app.logger.info("Using Azure OpenAI with managed identity credential for client ID: %s", client_id)
+        bp.azure_credential = ManagedIdentityCredential(client_id=client_id)
+    else:
+        tenant_id = os.environ["AZURE_TENANT_ID"]
+        current_app.logger.info("Using Azure OpenAI with Azure Developer CLI credential for tenant ID: %s", tenant_id)
+        bp.azure_credential = AzureDeveloperCliCredential(tenant_id=tenant_id)
 
-    # Use AzureDeveloperCliCredential with the current tenant.
-    azure_dev_cli_credential = AzureDeveloperCliCredential(tenant_id=os.getenv("AZURE_TENANT_ID"), process_timeout=60)
-
-    # Create a ChainedTokenCredential with ManagedIdentityCredential and AzureDeveloperCliCredential
-    #  - ManagedIdentityCredential is used for deployment on Azure Container Apps
-
-    #  - AzureDeveloperCliCredential is used for local development
-    # The order of the credentials is important, as the first valid token is used
-    # For more information check out:
-
-    # https://learn.microsoft.com/azure/developer/python/sdk/authentication/credential-chains?tabs=ctc#chainedtokencredential-overview
-    azure_credential = ChainedTokenCredential(user_assigned_managed_identity_credential, azure_dev_cli_credential)
-    current_app.logger.info("Using Azure OpenAI with credential")
-
-    if not os.getenv("AZURE_INFERENCE_ENDPOINT"):
-        raise ValueError("AZURE_INFERENCE_ENDPOINT is required for Azure OpenAI")
+    # Get the token provider for Azure OpenAI based on the selected Azure credential
+    bp.openai_token_provider = get_bearer_token_provider(
+        bp.azure_credential, "https://cognitiveservices.azure.com/.default"
+    )
 
     # Create the Asynchronous Azure OpenAI client
-    bp.ai_client = ChatCompletionsClient(
-        endpoint=os.environ["AZURE_INFERENCE_ENDPOINT"],
-        credential=azure_credential,
-        credential_scopes=["https://cognitiveservices.azure.com/.default"],
-        model="DeepSeek-R1",
+    bp.openai_client = AsyncOpenAI(
+        base_url=os.environ["AZURE_INFERENCE_ENDPOINT"],
+        api_key=await bp.openai_token_provider(),
+        default_query={"api-version": "2024-05-01-preview"},
     )
+
+    # Set the model name to the Azure OpenAI model deployment name
+    bp.openai_model = os.getenv("AZURE_DEEPSEEK_DEPLOYMENT")
 
 
 @bp.after_app_serving
 async def shutdown_openai():
-    await bp.ai_client.close()
+    await bp.openai_client.close()
 
 
 @bp.get("/")
@@ -69,15 +60,20 @@ async def chat_handler():
     async def response_stream():
         # This sends all messages, so API request may exceed token limits
         all_messages = [
-            SystemMessage(content="You are a helpful assistant."),
+            {"role": "system", "content": "You are a helpful assistant."},
         ] + request_messages
 
-        client: ChatCompletionsClient = bp.ai_client
-        result = await client.complete(messages=all_messages, max_tokens=2048, stream=True)
+        bp.openai_client.api_key = await bp.openai_token_provider()
+        chat_coroutine = bp.openai_client.chat.completions.create(
+            # Azure Open AI takes the deployment name as the model name
+            model=bp.openai_model,
+            messages=all_messages,
+            stream=True,
+        )
 
         try:
             is_thinking = False
-            async for update in result:
+            async for update in await chat_coroutine:
                 if update.choices:
                     content = update.choices[0].delta.content
                     if content == "<think>":
@@ -103,4 +99,4 @@ async def chat_handler():
             current_app.logger.error(e)
             yield json.dumps({"error": str(e)}, ensure_ascii=False) + "\n"
 
-    return Response(response_stream(), mimetype="application/json")
+    return Response(response_stream())

@@ -13,8 +13,8 @@ dependencies = [
     "httptools",
     # Used by uvicorn for reload functionality
     "watchfiles",
-    "azure-ai-inference",
     "azure-identity",
+    "openai",
     "aiohttp",
     "python-dotenv",
     "pyyaml"
