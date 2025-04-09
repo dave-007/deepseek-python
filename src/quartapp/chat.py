@@ -1,8 +1,9 @@
 import json
 import os
 
+import httpx
 from azure.identity.aio import AzureDeveloperCliCredential, ManagedIdentityCredential, get_bearer_token_provider
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, DefaultAsyncHttpxClient
 from quart import (
     Blueprint,
     Response,
@@ -27,15 +28,25 @@ async def configure_openai():
         bp.azure_credential = AzureDeveloperCliCredential(tenant_id=tenant_id)
 
     # Get the token provider for Azure OpenAI based on the selected Azure credential
-    bp.openai_token_provider = get_bearer_token_provider(
+    openai_token_provider = get_bearer_token_provider(
         bp.azure_credential, "https://cognitiveservices.azure.com/.default"
     )
+
+    class TokenBasedAuth(httpx.Auth):
+        async def async_auth_flow(self, request):
+            token = await openai_token_provider()
+            request.headers["Authorization"] = f"Bearer {token}"
+            yield request
+
+        def sync_auth_flow(self, request):
+            raise RuntimeError("Cannot use a sync authentication class with httpx.AsyncClient")
 
     # Create the Asynchronous Azure OpenAI client
     bp.openai_client = AsyncOpenAI(
         base_url=os.environ["AZURE_INFERENCE_ENDPOINT"],
-        api_key=await bp.openai_token_provider(),
+        api_key="placeholder",
         default_query={"api-version": "2024-05-01-preview"},
+        http_client=DefaultAsyncHttpxClient(auth=TokenBasedAuth()),
     )
 
     # Set the model name to the Azure OpenAI model deployment name
@@ -63,7 +74,6 @@ async def chat_handler():
             {"role": "system", "content": "You are a helpful assistant."},
         ] + request_messages
 
-        bp.openai_client.api_key = await bp.openai_token_provider()
         chat_coroutine = bp.openai_client.chat.completions.create(
             # Azure Open AI takes the deployment name as the model name
             model=bp.openai_model,

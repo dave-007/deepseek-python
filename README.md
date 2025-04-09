@@ -185,7 +185,7 @@ However, Azure Container Registry has a fixed cost per registry per day.
 
 You can try the [Azure pricing calculator](https://azure.microsoft.com/pricing/calculator/) for the resources:
 
-* Azure AI Service: S0 tier, DeepSeek-R1 model. Pricing is based on token count. [Pricing]()
+* Azure AI Service: S0 tier, DeepSeek-R1 model. Pricing is based on token count. [Pricing](https://aka.ms/DeepSeekPricing)
 * Azure Container App: Consumption tier with 0.5 CPU, 1GiB memory/storage. Pricing is based on resource allocation, and each month allows for a certain amount of free usage. [Pricing](https://azure.microsoft.com/pricing/details/container-apps/)
 * Azure Container Registry: Basic tier. [Pricing](https://azure.microsoft.com/pricing/details/container-registry/)
 * Log analytics: Pay-as-you-go tier. Costs based on data ingested. [Pricing](https://azure.microsoft.com/pricing/details/monitor/)
@@ -209,5 +209,3 @@ You may want to consider additional security measures, such as:
 ### Resources
 
 * [Blog post: Building a streaming DeepSeek-R1 app on Azure](https://blog.pamelafox.org/2025/04/building-streaming-deepseek-r1-app-on.html)
-
-
