@@ -3,7 +3,7 @@
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Azure-Samples/deepseek-python)
 [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/azure-samples/deepseek-python)
 
-This sample Python app uses the [Azure AI Inference SDK](https://learn.microsoft.com/python/api/overview/azure/ai-inference-readme?view=azure-python-preview) to call the DeepSeek-R1 model to generate responses to user messages.
+This sample Python app uses the [openai client library](https://pypi.org/project/openai/) to call the DeepSeek-R1 model to generate responses to user messages.
 
 The project includes all the infrastructure and configuration needed to provision a DeepSeek deployment in Azure AI and deploy the app to [Azure Container Apps](https://learn.microsoft.com/azure/container-apps/overview) using the [Azure Developer CLI](https://learn.microsoft.com/azure/developer/azure-developer-cli/overview). By default, the app will use managed identity to authenticate with Azure AI.
 
@@ -28,7 +28,7 @@ This template, the application code and configuration it contains, has been buil
 
 ## Features
 
-* A Python [Quart](https://quart.palletsprojects.com/en/latest/) that uses the [Azure AI Inference SDK](https://learn.microsoft.com/python/api/overview/azure/ai-inference-readme?view=azure-python-preview) package to generate responses to user messages.
+* A Python [Quart](https://quart.palletsprojects.com/en/latest/) that uses the [openai client library](https://pypi.org/project/openai/) package to generate responses to user messages.
 * A basic HTML/JS frontend that streams responses from the backend using [JSON Lines](http://jsonlines.org/) over a [ReadableStream](https://developer.mozilla.org/docs/Web/API/ReadableStream).
 * [Bicep files](https://docs.microsoft.com/azure/azure-resource-manager/bicep/) for provisioning Azure resources, including Azure AI Services, Azure Container Apps, Azure Container Registry, Azure Log Analytics, and RBAC roles.
 
@@ -185,7 +185,7 @@ However, Azure Container Registry has a fixed cost per registry per day.
 
 You can try the [Azure pricing calculator](https://azure.microsoft.com/pricing/calculator/) for the resources:
 
-* Azure AI Service: S0 tier, DeepSeek-RW model. Pricing is based on token count. [Pricing](https://aka.ms/DeepSeekPricing)
+* Azure AI Service: S0 tier, DeepSeek-R1 model. Pricing is based on token count. [Pricing](https://aka.ms/DeepSeekPricing)
 * Azure Container App: Consumption tier with 0.5 CPU, 1GiB memory/storage. Pricing is based on resource allocation, and each month allows for a certain amount of free usage. [Pricing](https://azure.microsoft.com/pricing/details/container-apps/)
 * Azure Container Registry: Basic tier. [Pricing](https://azure.microsoft.com/pricing/details/container-registry/)
 * Log analytics: Pay-as-you-go tier. Costs based on data ingested. [Pricing](https://azure.microsoft.com/pricing/details/monitor/)
@@ -205,3 +205,7 @@ You may want to consider additional security measures, such as:
 
 * Protecting the Azure Container Apps instance with a [firewall](https://learn.microsoft.com/azure/container-apps/waf-app-gateway) and/or [Virtual Network](https://learn.microsoft.com/azure/container-apps/networking?tabs=workload-profiles-env%2Cazure-cli).
 * Enabling Microsoft Defender for Cloud on the resource group and setting up [security policies](https://learn.microsoft.com/azure/defender-for-cloud/security-policy-concept).
+
+### Resources
+
+* [Blog post: Building a streaming DeepSeek-R1 app on Azure](https://blog.pamelafox.org/2025/04/building-streaming-deepseek-r1-app-on.html)
