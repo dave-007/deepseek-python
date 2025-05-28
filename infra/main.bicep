@@ -123,7 +123,7 @@ module aca 'aca.bicep' = {
     containerAppsEnvironmentName: containerApps.outputs.environmentName
     containerRegistryName: containerApps.outputs.registryName
     aiServicesDeploymentName: aiServicesDeploymentName
-    aiServicesEndpoint: 'https://${aiServices.outputs.name}.services.ai.azure.com/models'
+    aiServicesEndpoint: 'https://${aiServices.outputs.name}.services.ai.azure.com/openai/v1'
     exists: acaExists
   }
 }
