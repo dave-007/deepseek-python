@@ -1,10 +1,9 @@
 import json
 import os
 
-import httpx
 from azure.core.credentials import AzureKeyCredential
 from azure.identity.aio import AzureDeveloperCliCredential, ManagedIdentityCredential, get_bearer_token_provider
-from openai import AsyncOpenAI, DefaultAsyncHttpxClient
+from openai import AsyncAzureOpenAI
 from quart import (
     Blueprint,
     Response,
@@ -37,21 +36,11 @@ async def configure_openai():
         bp.azure_credential, "https://cognitiveservices.azure.com/.default"
     )
 
-    class TokenBasedAuth(httpx.Auth):
-        async def async_auth_flow(self, request):
-            token = await openai_token_provider()
-            request.headers["Authorization"] = f"Bearer {token}"
-            yield request
-
-        def sync_auth_flow(self, request):
-            raise RuntimeError("Cannot use a sync authentication class with httpx.AsyncClient")
-
     # Create the Asynchronous Azure OpenAI client
-    bp.openai_client = AsyncOpenAI(
-        base_url=os.environ["AZURE_INFERENCE_ENDPOINT"],
-        api_key="placeholder",
-        default_query={"api-version": "preview"},
-        http_client=DefaultAsyncHttpxClient(auth=TokenBasedAuth()),
+    bp.openai_client = AsyncAzureOpenAI(
+        azure_endpoint=os.environ["AZURE_INFERENCE_ENDPOINT"],
+        azure_ad_token_provider=openai_token_provider,
+        api_version="2025-04-01-preview",  # temporary
     )
 
     # Set the model name to the Azure OpenAI model deployment name
