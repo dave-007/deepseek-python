@@ -1,7 +1,6 @@
 import json
 import os
 
-from azure.core.credentials import AzureKeyCredential
 from azure.identity.aio import AzureDeveloperCliCredential, ManagedIdentityCredential, get_bearer_token_provider
 from openai import AsyncAzureOpenAI
 from quart import (
@@ -18,11 +17,7 @@ bp = Blueprint("chat", __name__, template_folder="templates", static_folder="sta
 
 @bp.before_app_serving
 async def configure_openai():
-    if azure_openai_key := os.getenv("AZURE_OPENAI_API_KEY_FOR_APP"):
-        # use key credential
-        current_app.logger.info("Using Azure OpenAI with API key")
-        bp.azure_credential = AzureKeyCredential(azure_openai_key)
-    elif os.getenv("RUNNING_IN_PRODUCTION"):
+    if os.getenv("RUNNING_IN_PRODUCTION"):
         client_id = os.environ["AZURE_CLIENT_ID"]
         current_app.logger.info("Using Azure OpenAI with managed identity credential for client ID: %s", client_id)
         bp.azure_credential = ManagedIdentityCredential(client_id=client_id)
