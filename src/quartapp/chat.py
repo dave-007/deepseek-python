@@ -35,11 +35,11 @@ async def configure_openai():
     bp.openai_client = AsyncAzureOpenAI(
         azure_endpoint=os.environ["AZURE_INFERENCE_ENDPOINT"],
         azure_ad_token_provider=openai_token_provider,
-        api_version="2025-04-01-preview",  # temporary
+        api_version="2024-10-21",
     )
 
     # Set the model name to the Azure OpenAI model deployment name
-    bp.openai_model = os.getenv("AZURE_DEEPSEEK_DEPLOYMENT")
+    bp.model_deployment_name = os.getenv("AZURE_DEEPSEEK_DEPLOYMENT")
 
 
 @bp.after_app_serving
@@ -65,7 +65,7 @@ async def chat_handler():
 
         chat_coroutine = bp.openai_client.chat.completions.create(
             # Azure Open AI takes the deployment name as the model name
-            model=bp.openai_model,
+            model=bp.model_deployment_name,
             messages=all_messages,
             stream=True,
         )
