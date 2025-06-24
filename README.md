@@ -209,5 +209,4 @@ You may want to consider additional security measures, such as:
 ### Resources
 
 * [Microsoft Learn: Develop reasoning apps with DeepSeek models using the OpenAI SDK](https://learn.microsoft.com/azure/developer/ai/how-to/use-reasoning-model-inference?tabs=github-codespaces)
-* [Blog post: Building a streaming DeepSeek-R1 app on Azure](https://blog.pamelafox.org/2025/04/building-streaming-deepseek-r1-app-on.html)
 * [Video walkthrough: Deploying DeepSeek-R1 app to Azure](https://www.youtube.com/watch?v=W2j-dK47dYU)
