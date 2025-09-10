@@ -30,7 +30,7 @@ param acaExists bool = false
     type: 'location'
   }
 })
-param aiServicesResourceLocation string
+param aiServicesResourceLocation string = 'southcentralus'
 param disableKeyBasedAuth bool = true
 
 // Parameters for the specific Azure AI deployment:
